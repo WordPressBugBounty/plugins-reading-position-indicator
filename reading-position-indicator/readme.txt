@@ -1,10 +1,10 @@
 === Reading Position Indicator ===
 Contributors: iworks
 Donate link: http://iworks.pl/donate/reading-position-indicator.php
-Tags: animated, notification, post, posts, indicator
+Tags: animation, indicator, progress bar, reading time, time
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.0.8
+Stable tag: 1.1.2
 Requires PHP: 8.0
 License: GPLv3 or later
 
@@ -52,6 +52,22 @@ Thank you [Pankaj Parashar](http://pankajparashar.com/) for your article on CSS-
 1. A new menu **Progress** in **Appearance** will appear in your Admin Menu.
 
 == Changelog ==
+
+= 1.1.2 (2025-03-24) =
+* The issue with the saving multiple option value has been resolved.
+
+= 1.1.1 (2025-03-24) =
+* The [iWorks Options](https://github.com/iworks/wordpress-options-class) module has been updated to 2.9.8.
+* The issue with the saving options has been resolved.
+
+= 1.1.0 (2025-03-02) =
+* The [iWorks Rate](https://github.com/iworks/iworks-rate) module has been updated to 2.2.3.
+* The [iWorks Options](https://github.com/iworks/wordpress-options-class) module has been updated to 2.9.7.
+
+= 1.0.9 (2024-12-07) =
+* The [iWorks Rate](https://github.com/iworks/iworks-rate) module has been updated to 2.2.1.
+* The missing $domain parameter in function call to __() has been fixed. [#1](https://github.com/iworks/reading-position-indicator/issues/1)
+* Escape functions where been added in few places.
 
 = 1.0.8 (2024-02-21) =
 * The [iWorks Options](https://github.com/iworks/wordpress-options-class) module has been updated to 2.9.2.

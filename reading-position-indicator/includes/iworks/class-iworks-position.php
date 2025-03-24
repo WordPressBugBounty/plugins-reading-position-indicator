@@ -1,14 +1,40 @@
 <?php
+/*
+Copyright 2015-2025 Marcin Pietrzak (marcin@iworks.pl)
+
+this program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License, version 2, as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+ */
+
+defined( 'ABSPATH' ) || exit; // Exit if accessed directly
 
 class iworks_position {
 	private $base;
 	private $capability;
 	private $options;
 	private $root;
-	private $version = '1.0.8';
+	private $version = '1.1.2';
 	private $min     = '.min';
 	private $check   = false;
 	private $data    = null;
+
+	/**
+	 * plugin file
+	 *
+	 * @since 1.0.9
+	 */
+	private $plugin_file;
 
 	public function __construct() {
 		/**
@@ -17,23 +43,30 @@ class iworks_position {
 		$this->base       = dirname( dirname( __FILE__ ) );
 		$this->root       = plugins_url( '', ( dirname( dirname( __FILE__ ) ) ) );
 		$this->capability = apply_filters( 'iworks_reading_position_indicator_capability', 'manage_options' );
-
+		/**
+		 * plugin ID
+		 *
+		 * @since 3.3.2
+		 */
+		$file              = dirname( dirname( dirname( __FILE__ ) ) ) . '/reading-position-indicator.php';
+		$this->plugin_file = plugin_basename( $file );
+		/**
+		 * is debug?
+		 */
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			$this->min = '';
 		}
 		/**
-		 * options
-		 */
-		$this->options = iworks_reading_position_indicator_get_options_object();
-		/**
 		 * generate
 		 */
-		add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_scripts' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
+		add_action( 'init', array( $this, 'action_init_load_plugin_textdomain' ) );
+		add_action( 'init', array( $this, 'action_init_option_object' ), 11 );
+		add_action( 'iworks_rate_css', array( $this, 'iworks_rate_css' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_scripts' ) );
+		add_action( 'wp_head', array( $this, 'set_check_value' ), 0 );
 		add_action( 'wp_head', array( $this, 'wp_head' ) );
 		add_filter( 'the_content', array( $this, 'the_content' ) );
-		add_action( 'iworks_rate_css', array( $this, 'iworks_rate_css' ) );
-		add_action( 'wp_head', array( $this, 'set_check_value' ), 0 );
 		/**
 		 * iWorks Rate Class
 		 */
@@ -41,10 +74,21 @@ class iworks_position {
 		add_filter( 'iworks_rate_settings_page_url_' . 'reading-position-indicator', array( $this, 'filter_get_setting_page_url' ) );
 	}
 
+	/**
+	 * Initialize iWorks Option object
+	 */
+	public function action_init_option_object() {
+		/**
+		 * options
+		 */
+		$this->check_option_object();
+	}
+
 	public function wp_head() {
 		if ( ! $this->check ) {
 			return;
 		}
+		$this->check_option_object();
 		$data = $this->get_data();
 		if ( ! isset( $data['style'] ) ) {
 			return;
@@ -159,17 +203,14 @@ background: linear-gradient(to right, <?php echo $color2; ?>, <?php echo $color1
 	}
 
 	public function admin_init() {
-		/**
-		 * options
-		 */
-		$this->options->options_init();
+		$this->check_option_object();
 	}
 
 	public function wp_enqueue_scripts() {
 		if ( ! $this->check ) {
 			return;
 		}
-
+		$this->check_option_object();
 		$file = sprintf( '/assets/styles/%s%s.css', __CLASS__, $this->min );
 		wp_register_style(
 			__CLASS__,
@@ -179,7 +220,6 @@ background: linear-gradient(to right, <?php echo $color2; ?>, <?php echo $color1
 			'handheld, projection, screen'
 		);
 		wp_enqueue_style( __CLASS__ );
-
 		$file = sprintf( '/assets/scripts/%s%s.js', __CLASS__, $this->min );
 		wp_register_script(
 			__CLASS__,
@@ -251,6 +291,9 @@ background: linear-gradient(to right, <?php echo $color2; ?>, <?php echo $color1
 		if ( ! isset( $data['post_type'] ) ) {
 			return;
 		}
+		if ( empty( $data['post_type'] ) ) {
+			return;
+		}
 		$post_type   = get_post_type();
 		$this->check = in_array( $post_type, $data['post_type'] );
 	}
@@ -261,6 +304,7 @@ background: linear-gradient(to right, <?php echo $color2; ?>, <?php echo $color1
 	 * @since 1.0.2
 	 */
 	private function get_data() {
+		$this->check_option_object();
 		if ( null === $this->data ) {
 			$this->data = $this->options->get_all_options();
 		}
@@ -287,5 +331,47 @@ background: linear-gradient(to right, <?php echo $color2; ?>, <?php echo $color1
 
 	public function filter_get_setting_page_url( $url ) {
 		return $this->get_setting_page_url();
+	}
+
+	/**
+	 * register plugin to iWorks Rate Helper
+	 *
+	 * @since 1.0.9
+	 */
+	public function action_init_register_iworks_rate() {
+		if ( ! class_exists( 'iworks_rate' ) ) {
+			include_once dirname( __FILE__ ) . '/rate/rate.php';
+		}
+		do_action(
+			'iworks-register-plugin',
+			plugin_basename( $this->plugin_file ),
+			__( 'Reading Position Indicator ', 'reading-position-indicator' ),
+			'reading-position-indicator'
+		);
+	}
+
+	/**
+	 * Load plugin text domain.
+	 *
+	 * @since 1.0.9
+	 */
+	public function action_init_load_plugin_textdomain() {
+		load_plugin_textdomain(
+			'reading-position-indicator',
+			false,
+			plugin_basename( $this->root ) . '/languages'
+		);
+	}
+
+	/**
+	 * check option object
+	 *
+	 * @since 1.0.9
+	 */
+	private function check_option_object() {
+		if ( is_a( $this->options, 'iworks_options' ) ) {
+			return;
+		}
+		$this->options = iworks_reading_position_indicator_get_options_object();
 	}
 }
