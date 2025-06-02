@@ -10,8 +10,8 @@
  * @wordpress-plugin
  * Plugin Name:       Reading Position Indicator
  * Plugin URI:        https://github.com/iworks/reading-position-indicator
- * Description:       Create a vertical progress bar to show how scroll progress of current single entry.
- * Version:           1.1.2
+ * Description:       A sleek, customizable vertical progress bar that visually indicates readers' scroll position on your WordPress posts and pages.
+ * Version:           1.2.0
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            Marcin Pietrzak
